@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Beli Blend</title>
+<meta name="description" content="Spotify Wrapped, but for your Beli restaurant rankings. Blend your taste with a friend's." />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <span class="logo">🍽️ Beli Blend</span>
+</header>
+
+<main id="app">
+
+  <!-- ============ WELCOME / STEP 1: create your list ============ -->
+  <section id="view-welcome" class="view">
+    <div class="hero">
+      <h1>Blend your Beli taste with a friend's</h1>
+      <p class="sub">Add your ranked restaurants, get a link, send it to a friend. When they add theirs, you both get a Wrapped-style breakdown of your food compatibility.</p>
+    </div>
+    <div id="builder-welcome"></div>
+    <button id="btn-generate-link" class="btn-primary" disabled>Generate my Blend link</button>
+    <div id="share-box" class="share-box hidden">
+      <p>Send this link to your friend:</p>
+      <div class="share-row">
+        <input id="share-link" type="text" readonly />
+        <button id="btn-copy-link" class="btn-secondary">Copy</button>
+      </div>
+      <p class="hint">When they open it and add their list, you'll both land on your Blend.</p>
+    </div>
+  </section>
+
+  <!-- ============ JOIN / STEP 2: friend opened your link ============ -->
+  <section id="view-join" class="view hidden">
+    <div class="hero">
+      <h1><span id="join-friend-name">Your friend</span> wants to Blend with you</h1>
+      <p class="sub">Add your ranked restaurants below to reveal your Beli Blend.</p>
+    </div>
+    <div id="builder-join"></div>
+    <button id="btn-see-blend" class="btn-primary" disabled>See our Blend</button>
+  </section>
+
+  <!-- ============ RESULTS: slide deck ============ -->
+  <section id="view-results" class="view hidden">
+    <div class="deck">
+      <div class="deck-progress" id="deck-progress"></div>
+      <div class="deck-slides" id="deck-slides"></div>
+      <div class="deck-nav">
+        <button id="btn-prev" class="btn-nav" aria-label="Previous">‹</button>
+        <button id="btn-next" class="btn-nav" aria-label="Next">›</button>
+      </div>
+    </div>
+    <div class="deck-footer">
+      <button id="btn-share-results" class="btn-secondary">Copy shareable results link</button>
+      <button id="btn-restart" class="btn-tertiary">Start a new Blend</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- Restaurant list builder template (cloned via JS) -->
+<template id="tpl-builder">
+  <div class="builder">
+    <div class="builder-tabs">
+      <button class="tab-btn active" data-tab="ocr">📷 Upload screenshots</button>
+      <button class="tab-btn" data-tab="paste">📋 Paste a list</button>
+      <button class="tab-btn" data-tab="manual">✏️ Add manually</button>
+    </div>
+
+    <div class="tab-panel" data-panel="ocr">
+      <p class="panel-hint">Upload one or more screenshots of your Beli ranked list. We read them entirely in your browser — nothing is uploaded anywhere.</p>
+      <input type="file" class="ocr-file-input" accept="image/*" multiple />
+      <div class="ocr-status"></div>
+    </div>
+
+    <div class="tab-panel hidden" data-panel="paste">
+      <p class="panel-hint">Paste your list, one restaurant per line, e.g. <code>Lilia - 9.2, Italian</code></p>
+      <textarea class="paste-input" rows="6" placeholder="Lilia - 9.2, Italian&#10;Joe's Pizza - 8.5, Pizza&#10;Via Carota - 9.0, Italian"></textarea>
+      <button class="btn-secondary btn-parse-paste">Add these</button>
+    </div>
+
+    <div class="tab-panel hidden" data-panel="manual">
+      <div class="manual-row">
+        <input type="text" class="manual-name" placeholder="Restaurant name" />
+        <input type="number" class="manual-score" placeholder="Score" min="0" max="10" step="0.1" />
+        <input type="text" class="manual-cuisine" placeholder="Cuisine (optional)" />
+        <button class="btn-secondary btn-add-manual">Add</button>
+      </div>
+    </div>
+
+    <div class="review-list-wrap">
+      <div class="review-header">
+        <span class="review-title">Your list</span>
+        <span class="review-count">0 restaurants</span>
+      </div>
+      <div class="review-list"></div>
+    </div>
+
+    <div class="name-row">
+      <label>Your name: <input type="text" class="your-name" placeholder="e.g. Trisha" /></label>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-review-row">
+  <div class="review-row">
+    <input type="text" class="rr-name" />
+    <input type="number" class="rr-score" min="0" max="10" step="0.1" />
+    <input type="text" class="rr-cuisine" placeholder="cuisine" />
+    <button class="rr-delete" aria-label="Remove">✕</button>
+  </div>
+</template>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="js/state.js"></script>
+<script src="js/parse.js"></script>
+<script src="js/algorithm.js"></script>
+<script src="js/ocr.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
