@@ -1,6 +1,10 @@
 # Beli Blend
 
+<<<<<<< HEAD
 Spotify Blend, but for [Beli](https://beliapp.com): a no-login, no-backend, static site that compares two people's Beli restaurant rankings and outputs a Wrapped-style compatibility deck — compatibility score, shared spots, biggest agreement/disagreement, shared cuisine preferences, and cross-recommendations.
+=======
+Spotify Blend, but for [Beli](https://beliapp.com) — a tool that compares friends' Beli restaurant rankings and reveals a Wrapped-style compatibility breakdown.
+>>>>>>> c478b992818b1936caa2ecf5f4072e6c4941c106
 
 ## Data model
 
