@@ -16,15 +16,14 @@ Beli has no public web app, no official API, and its Terms of Service prohibit s
 
 There is no backend and no database. A person's list is gzip-compressed and base64url-encoded directly into a shareable URL. Opening that link and adding a second list computes the comparison client-side; a second link encodes the finished result for later reference.
 
-## The algorithm
+## Algorithm
 
-Each shared restaurant becomes a pair of scores (yours, theirs). Compatibility is computed as:
+Compatibility % = `0.7 × restaurant_cosine + 0.3 × cuisine_cosine` (falls back to whichever term is available if the other has insufficient data):
 
-- **Cosine similarity** over the vector of scores for restaurants you've *both* ranked — this measures whether you two rank shared places the same way, independent of how generous or stingy each of you is with scores.
-- **Cosine similarity** over a cuisine-preference vector (average score per cuisine, across your *whole* list) — this captures taste alignment even before your restaurant lists overlap much.
-- The two are blended (70% restaurant overlap / 30% cuisine vibe, falling back to whichever signal is available) into a single 0–100% score, mapped to a tier label (e.g. "Great Eats Duo", "Same Stomach, Same Soul").
+- **restaurant_cosine** — cosine similarity between the two people's score vectors over restaurants both have ranked. Requires ≥2 shared restaurants; measures agreement independent of each person's overall scoring generosity.
+- **cuisine_cosine** — cosine similarity between two cuisine-preference vectors (each person's average score per cuisine, over their full list). Requires ≥1 cuisine tagged by either person; captures taste alignment even with no restaurant overlap.
 
-Recommendations work the same way fan-made "Wrapped" tools for Letterboxd/Goodreads do it: restaurants one person rated highly (≥8) that the other hasn't been to yet.
+The resulting 0–100 score maps to a tier label (e.g. "Great Eats Duo", "Same Stomach, Same Soul"). Recommendations: for each person, restaurants the other rated ≥8 that they haven't ranked themselves, sorted by score, top 3.
 
 ## Running it
 
