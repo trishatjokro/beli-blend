@@ -1,21 +1,16 @@
 # Beli Blend
 
-Spotify Blend, but for [Beli](https://beliapp.com) — a fan-made, no-login, no-backend tool that compares two friends' Beli restaurant rankings and reveals a Wrapped-style compatibility breakdown.
+Spotify Blend, but for [Beli](https://beliapp.com): a no-login, no-backend, static site that compares two people's Beli restaurant rankings and outputs a Wrapped-style compatibility deck — compatibility score, shared spots, biggest agreement/disagreement, shared cuisine preferences, and cross-recommendations.
 
-**Live idea:** you rank restaurants on Beli. Your friend ranks restaurants on Beli. Beli Blend takes both lists and shows you a compatibility score, your shared spots, where you agree/disagree the most, your shared cuisine "vibe," and restaurants you should try from each other's list — as a swipeable, Wrapped-style slide deck.
+## Data model
 
-## Why this works the way it does
+Beli has no public web app, no official API, and its Terms of Service prohibit scraping and reverse-engineering. This tool never contacts Beli's servers — no login, no scraping, no private API calls. Input is entirely user-supplied, via one of three equivalent paths into the same editable review table:
 
-Beli is mobile-only with no public web app and no official API, and its Terms of Service explicitly prohibit scraping and reverse-engineering. So this project deliberately **never talks to Beli's servers at all** — there's no login, no scraping, no private API calls. Instead:
+- **Screenshot upload** — OCR (via [Tesseract.js](https://github.com/naptha/tesseract.js)) reads restaurant names and scores off the image, client-side. Images are never uploaded anywhere.
+- **Paste** — a typed or copied list, one restaurant per line.
+- **Manual entry** — one restaurant at a time.
 
-- You get your own ranking data out of Beli yourself, either by:
-  - **Uploading screenshots** of your Beli ranked list — OCR (via [Tesseract.js](https://github.com/naptha/tesseract.js)) reads the restaurant names and scores off the image **entirely in your browser**. Nothing is uploaded anywhere.
-  - **Pasting a list** you typed or copied yourself.
-  - **Adding restaurants manually** one at a time.
-- All three feed into the same editable review table, so you can fix anything OCR misreads before continuing.
-- There's no backend and no database. Your list is compressed and encoded directly into a shareable URL. You send that link to a friend; when they add their list, the comparison happens client-side and (optionally) a second shareable link encodes the finished result so you can both revisit it.
-
-This keeps the whole thing squarely on the "you looking at and re-entering your own data" side of the line, rather than anything that could be read as automated access to Beli's app or servers.
+There is no backend and no database. A person's list is gzip-compressed and base64url-encoded directly into a shareable URL. Opening that link and adding a second list computes the comparison client-side; a second link encodes the finished result for later reference.
 
 ## The algorithm
 
