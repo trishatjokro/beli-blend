@@ -1,6 +1,6 @@
 # Beli Blend
 
-Spotify Blend, but for [Beli](https://beliapp.com) — a tool that compares two friends' Beli restaurant rankings and reveals a Wrapped-style compatibility breakdown.
+Spotify Blend, but for [Beli](https://beliapp.com) — a tool that compares friends' Beli restaurant rankings and reveals a Wrapped-style compatibility breakdown.
 
 **Live idea:** you rank restaurants on Beli. Your friend ranks restaurants on Beli. Beli Blend takes both lists and shows you a compatibility score, your shared spots, where you agree/disagree the most, your shared cuisine "vibe," and restaurants you should try from each other's list — as a swipeable, Wrapped-style slide deck.
 
