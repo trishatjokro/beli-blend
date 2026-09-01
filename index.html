@@ -66,6 +66,7 @@
   <div class="builder">
     <div class="builder-tabs">
       <button class="tab-btn active" data-tab="ocr">📷 Upload screenshots</button>
+      <button class="tab-btn" data-tab="import">📦 Import file</button>
       <button class="tab-btn" data-tab="paste">📋 Paste a list</button>
       <button class="tab-btn" data-tab="manual">✏️ Add manually</button>
     </div>
@@ -74,6 +75,12 @@
       <p class="panel-hint">Upload one or more screenshots of your Beli ranked list. We read them entirely in your browser — nothing is uploaded anywhere.</p>
       <input type="file" class="ocr-file-input" accept="image/*" multiple />
       <div class="ocr-status"></div>
+    </div>
+
+    <div class="tab-panel hidden" data-panel="import">
+      <p class="panel-hint">Import a <strong>Google Takeout</strong> Maps export (<code>Reviews.json</code>) or a <strong>CSV</strong> export (Yelp's data download, a spreadsheet, etc.) — we'll auto-detect the format and columns. Everything still lands in the editable table below, so check it before continuing.</p>
+      <input type="file" class="import-file-input" accept=".json,.csv,application/json,text/csv" />
+      <div class="import-status"></div>
     </div>
 
     <div class="tab-panel hidden" data-panel="paste">
