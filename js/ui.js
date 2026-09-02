@@ -96,6 +96,26 @@ window.BeliUI = (function () {
       ocrInput.value = "";
     });
 
+    // Import file (Google Takeout / CSV)
+    const importInput = root.querySelector(".import-file-input");
+    const importStatus = root.querySelector(".import-status");
+    importInput.addEventListener("change", async () => {
+      const file = importInput.files && importInput.files[0];
+      if (!file) return;
+      try {
+        const { items: parsed, warning } = await window.BeliImporters.importFile(file);
+        if (warning) {
+          importStatus.textContent = warning;
+        } else {
+          addItems(parsed);
+          importStatus.textContent = `Added ${parsed.length} restaurant${parsed.length === 1 ? "" : "s"} — check the list below and fix anything that looks off.`;
+        }
+      } catch (e) {
+        importStatus.textContent = e.message || "Import failed — try Paste or Add manually instead.";
+      }
+      importInput.value = "";
+    });
+
     // Paste
     const pasteInput = root.querySelector(".paste-input");
     root.querySelector(".btn-parse-paste").addEventListener("click", () => {
