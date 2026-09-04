@@ -1,6 +1,6 @@
 # Beli Blend
 
-Spotify Blend, but for [Beli](https://beliapp.com): a no-login, no-backend, static site that compares friends' Beli restaurant rankings and outputs a Wrapped-style compatibility deck — compatibility score, shared spots, biggest agreement/disagreement, shared cuisine preferences, and cross-recommendations.
+Spotify Blend, but for [Beli](https://beliapp.com): a no-login, no-backend, static site that compares friends' Beli restaurant rankings and outputs a Wrapped-style compatibility deck — compatibility score, shared spots, where you most agree/disagree, cuisine range, shared cuisine preferences, and cross-recommendations.
 
 ## Data model
 
@@ -16,10 +16,12 @@ There is no backend and no database. A person's list is gzip-compressed and base
 
 Compatibility % = `0.7 × restaurant_cosine + 0.3 × cuisine_cosine` (falls back to whichever term is available if the other has insufficient data):
 
-- **restaurant_cosine** — cosine similarity between the two people's score vectors over restaurants both have ranked. Requires ≥2 shared restaurants; measures agreement independent of each person's overall scoring generosity.
+- **restaurant_cosine** — cosine similarity between the two people's *mean-centered* score vectors over restaurants both have ranked (i.e. Pearson correlation). Requires ≥2 shared restaurants; mean-centering is what makes it independent of each person's overall scoring generosity — plain cosine only normalizes magnitude, not offset, so it would still reward two people who happen to score on the same baseline over two who rank identically but grade on different curves.
 - **cuisine_cosine** — cosine similarity between two cuisine-preference vectors (each person's average score per cuisine, over their full list). Requires ≥1 cuisine tagged by either person; captures taste alignment even with no restaurant overlap.
 
 The resulting 0–100 score maps to a tier label (e.g. "Great Eats Duo", "Same Stomach, Same Soul"). Recommendations: for each person, restaurants the other rated ≥8 that they haven't ranked themselves, sorted by score, top 3.
+
+Restaurants are matched between the two lists by normalized name first, falling back to a fuzzy match (substring containment or word-overlap) for near-duplicates like "Joe's Pizza" vs "Joes Pizza NYC" — see Limitations.
 
 ## Running it
 
@@ -59,7 +61,7 @@ js/main.js              view routing / wiring
 ## Limitations
 
 - OCR accuracy depends on screenshot quality and Beli's current UI layout — always double-check the review table before generating your link.
-- Restaurant matching between two people is done by normalized name, so slightly different spellings (e.g. "Joe's Pizza" vs "Joes Pizza NYC") may not match perfectly — fix names in the review table if needed.
+- Restaurant matching falls back to a fuzzy match for slightly different spellings (e.g. "Joe's Pizza" vs "Joes Pizza NYC"), but very different names for the same place (or coincidentally similar names for different places) can still match wrong — fix names in the review table if needed.
 - This is a for-fun hobby project, not an official Beli product or integration.
 
 ## License

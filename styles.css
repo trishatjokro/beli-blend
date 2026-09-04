@@ -9,9 +9,29 @@
   --border: #eee0d6;
   --radius: 16px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17120f;
+    --card: #241c17;
+    --ink: #f5ece4;
+    --ink-soft: #b8a99d;
+    --accent: #ff6b45;
+    --accent-soft: rgba(255, 107, 69, 0.18);
+    --accent-2: #3ec3b1;
+    --border: #3a2f28;
+    color-scheme: dark;
+  }
 }
 
 * { box-sizing: border-box; }
+
+input[type="text"], input[type="number"], textarea {
+  background: var(--card);
+  color: var(--ink);
+}
 
 body {
   margin: 0;
@@ -66,7 +86,7 @@ body {
 
 .tab-btn {
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--card);
   border-radius: 999px;
   padding: 8px 14px;
   font-size: 0.85rem;

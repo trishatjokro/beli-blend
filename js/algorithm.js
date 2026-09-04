@@ -25,29 +25,90 @@ window.BeliAlgorithm = (function () {
     return map;
   }
 
+  // Near-duplicate name matching for the fuzzy fallback below — e.g. "Joe's
+  // Pizza" vs "Joes Pizza NYC" should still count as the same restaurant.
+  function tokenize(name) {
+    return new Set(name.split(" ").filter(Boolean));
+  }
+
+  function jaccard(setA, setB) {
+    let intersection = 0;
+    for (const t of setA) if (setB.has(t)) intersection++;
+    const union = setA.size + setB.size - intersection;
+    return union === 0 ? 0 : intersection / union;
+  }
+
+  function fuzzyScore(normA, normB) {
+    if (!normA || !normB) return 0;
+    if (normA === normB) return 1;
+    if (normA.length >= 4 && normB.length >= 4 && (normA.includes(normB) || normB.includes(normA))) return 0.9;
+    return jaccard(tokenize(normA), tokenize(normB));
+  }
+
+  const FUZZY_MATCH_THRESHOLD = 0.6;
+
+  function makeShared(ra, rb) {
+    return {
+      name: ra.name,
+      cuisine: ra.cuisine || rb.cuisine || "",
+      scoreA: ra.score,
+      scoreB: rb.score,
+      diff: Math.abs(ra.score - rb.score),
+    };
+  }
+
+  // Returns matched items plus the sets of normalized keys (from each
+  // person's own map) that ended up matched, so callers can exclude them
+  // consistently even when a match came from the fuzzy fallback rather than
+  // an exact name match.
   function sharedItems(personA, personB) {
     const mapA = indexByName(personA);
     const mapB = indexByName(personB);
     const items = [];
+    const usedA = new Set();
+    const usedB = new Set();
+
     for (const [key, ra] of mapA.entries()) {
       const rb = mapB.get(key);
       if (rb) {
-        items.push({
-          name: ra.name,
-          cuisine: ra.cuisine || rb.cuisine || "",
-          scoreA: ra.score,
-          scoreB: rb.score,
-          diff: Math.abs(ra.score - rb.score),
-        });
+        items.push(makeShared(ra, rb));
+        usedA.add(key);
+        usedB.add(key);
       }
     }
-    return items;
+
+    for (const [keyA, ra] of mapA.entries()) {
+      if (usedA.has(keyA)) continue;
+      let bestKey = null, bestRb = null, bestScore = 0;
+      for (const [keyB, rb] of mapB.entries()) {
+        if (usedB.has(keyB)) continue;
+        const score = fuzzyScore(keyA, keyB);
+        if (score > bestScore) { bestScore = score; bestKey = keyB; bestRb = rb; }
+      }
+      if (bestRb && bestScore >= FUZZY_MATCH_THRESHOLD) {
+        items.push(makeShared(ra, bestRb));
+        usedA.add(keyA);
+        usedB.add(bestKey);
+      }
+    }
+
+    return { items, usedA, usedB };
   }
 
+  function meanCenter(vec) {
+    const mean = vec.reduce((a, b) => a + b, 0) / vec.length;
+    return vec.map((v) => v - mean);
+  }
+
+  // Mean-centered before comparing, i.e. Pearson correlation rather than
+  // plain cosine similarity — plain cosine only normalizes magnitude, not
+  // offset, so two people who rank places identically but score on
+  // different baselines (one always 5-7, the other 8-10) would otherwise
+  // come out less "agreed" than they actually are.
   function restaurantCosine(shared) {
     if (shared.length < 2) return null;
-    const vecA = shared.map((s) => s.scoreA);
-    const vecB = shared.map((s) => s.scoreB);
+    const vecA = meanCenter(shared.map((s) => s.scoreA));
+    const vecB = meanCenter(shared.map((s) => s.scoreB));
     return cosineSimilarity(vecA, vecB);
   }
 
@@ -91,17 +152,25 @@ window.BeliAlgorithm = (function () {
       .slice(0, limit);
   }
 
-  function recommendations(from, to, shared, threshold = 8, limit = 3) {
-    // restaurants "to" rated highly that "from" hasn't been to
-    const sharedKeys = new Set(shared.map((s) => normalizeName(s.name)));
+  function recommendations(to, excludeKeys, threshold = 8, limit = 3) {
+    // restaurants "to" rated highly that the other person hasn't matched yet
     return to.restaurants
-      .filter((r) => r.score >= threshold && !sharedKeys.has(normalizeName(r.name)))
+      .filter((r) => r.score >= threshold && !excludeKeys.has(normalizeName(r.name)))
       .sort((a, b) => b.score - a.score)
       .slice(0, limit);
   }
 
+  function cuisineDiversity(person) {
+    const set = new Set();
+    for (const r of person.restaurants) {
+      const c = (r.cuisine || "").trim().toLowerCase();
+      if (c) set.add(c);
+    }
+    return set.size;
+  }
+
   function compute(personA, personB) {
-    const shared = sharedItems(personA, personB);
+    const { items: shared, usedA, usedB } = sharedItems(personA, personB);
     const rCos = restaurantCosine(shared);
     const cv = cuisineVectors(personA, personB);
     const cCos = cv ? cosineSimilarity(cv.vecA, cv.vecB) : null;
@@ -116,17 +185,21 @@ window.BeliAlgorithm = (function () {
 
     const sortedByDiff = [...shared].sort((a, b) => a.diff - b.diff);
     const mostAgreed = sortedByDiff[0] || null;
-    const mostDisagreed = sortedByDiff[sortedByDiff.length - 1] || null;
+    const topDisagreements = [...shared]
+      .filter((s) => s.diff > 0)
+      .sort((a, b) => b.diff - a.diff)
+      .slice(0, 3);
 
     return {
       pct,
       tier: tierLabel(pct),
       shared,
       mostAgreed,
-      mostDisagreed,
+      topDisagreements,
       sharedCuisines: topSharedCuisines(cv),
-      recsForA: recommendations(personA, personB, shared),
-      recsForB: recommendations(personB, personA, shared),
+      adventure: { a: cuisineDiversity(personA), b: cuisineDiversity(personB) },
+      recsForA: recommendations(personB, usedB),
+      recsForB: recommendations(personA, usedA),
     };
   }
 

@@ -104,7 +104,7 @@ window.BeliImporters = (function () {
     }
 
     // Auto-scale: if every score fits a 5-star scale, assume stars and normalize to /10.
-    const maxScore = Math.max(...raw.map((x) => x.score));
+    const maxScore = raw.reduce((max, x) => Math.max(max, x.score), -Infinity);
     const scale = maxScore > 0 && maxScore <= 5 ? 2 : 1;
     const items = raw.map((x) => ({ ...x, score: clampScore(x.score * scale) }));
     return { items, warning: null };

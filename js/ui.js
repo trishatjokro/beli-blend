@@ -182,15 +182,29 @@ window.BeliUI = (function () {
       slides.push({
         html: `<h2>You agree most on</h2>
                <div class="big-number" style="font-size:1.8rem">${escapeHtml(r.mostAgreed.name)}</div>
-               <p class="desc">${personA.name}: ${r.mostAgreed.scoreA} &nbsp;·&nbsp; ${personB.name}: ${r.mostAgreed.scoreB}</p>`,
+               <p class="desc">${escapeHtml(personA.name)}: ${r.mostAgreed.scoreA} &nbsp;·&nbsp; ${escapeHtml(personB.name)}: ${r.mostAgreed.scoreB}</p>`,
       });
     }
 
-    if (r.mostDisagreed && r.mostDisagreed !== r.mostAgreed) {
+    if (r.topDisagreements.length > 0) {
+      const rows = r.topDisagreements
+        .map((s) => `<div class="item"><span class="name">${escapeHtml(s.name)}</span><span class="meta">${s.scoreA} / ${s.scoreB}</span></div>`)
+        .join("");
       slides.push({
-        html: `<h2>You disagree most on</h2>
-               <div class="big-number" style="font-size:1.8rem">${escapeHtml(r.mostDisagreed.name)}</div>
-               <p class="desc">${personA.name}: ${r.mostDisagreed.scoreA} &nbsp;·&nbsp; ${personB.name}: ${r.mostDisagreed.scoreB}</p>`,
+        html: `<h2>Where you disagree most</h2>
+               <p class="desc">${escapeHtml(personA.name)} / ${escapeHtml(personB.name)} scores</p>
+               <div class="slide-list">${rows}</div>`,
+      });
+    }
+
+    if (r.adventure.a > 0 || r.adventure.b > 0) {
+      const moreAdventurous = r.adventure.a === r.adventure.b
+        ? null
+        : (r.adventure.a > r.adventure.b ? personA : personB);
+      slides.push({
+        html: `<h2>Cuisine range</h2>
+               <p class="desc">${escapeHtml(personA.name)} has tagged ${r.adventure.a} cuisine${r.adventure.a === 1 ? "" : "s"} &nbsp;·&nbsp; ${escapeHtml(personB.name)} has tagged ${r.adventure.b}</p>
+               ${moreAdventurous ? `<div class="tier-label">🌍 ${escapeHtml(moreAdventurous.name)} is the adventurous one</div>` : ""}`,
       });
     }
 
