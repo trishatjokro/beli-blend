@@ -55,9 +55,34 @@
     </div>
     <div class="deck-footer">
       <button id="btn-share-results" class="btn-secondary">Copy shareable results link</button>
+      <button id="btn-download-card" class="btn-secondary">Download image to share</button>
       <button id="btn-restart" class="btn-tertiary">Start a new Blend</button>
     </div>
   </section>
+
+  <datalist id="cuisine-suggestions">
+    <option value="Italian"></option>
+    <option value="Japanese"></option>
+    <option value="Sushi"></option>
+    <option value="Mexican"></option>
+    <option value="American"></option>
+    <option value="Chinese"></option>
+    <option value="French"></option>
+    <option value="Thai"></option>
+    <option value="Indian"></option>
+    <option value="Korean"></option>
+    <option value="Mediterranean"></option>
+    <option value="Vietnamese"></option>
+    <option value="Spanish"></option>
+    <option value="Greek"></option>
+    <option value="Middle Eastern"></option>
+    <option value="Seafood"></option>
+    <option value="Steakhouse"></option>
+    <option value="BBQ"></option>
+    <option value="Pizza"></option>
+    <option value="Bakery/Cafe"></option>
+    <option value="Vegan/Vegetarian"></option>
+  </datalist>
 
 </main>
 
@@ -93,7 +118,7 @@
       <div class="manual-row">
         <input type="text" class="manual-name" placeholder="Restaurant name" />
         <input type="number" class="manual-score" placeholder="Score" min="0" max="10" step="0.1" />
-        <input type="text" class="manual-cuisine" placeholder="Cuisine (optional)" />
+        <input type="text" class="manual-cuisine" placeholder="Cuisine (optional)" list="cuisine-suggestions" />
         <button class="btn-secondary btn-add-manual">Add</button>
       </div>
     </div>
@@ -116,7 +141,7 @@
   <div class="review-row">
     <input type="text" class="rr-name" />
     <input type="number" class="rr-score" min="0" max="10" step="0.1" />
-    <input type="text" class="rr-cuisine" placeholder="cuisine" />
+    <input type="text" class="rr-cuisine" placeholder="cuisine" list="cuisine-suggestions" />
     <button class="rr-delete" aria-label="Remove">✕</button>
   </div>
 </template>
@@ -127,6 +152,7 @@
 <script src="js/algorithm.js"></script>
 <script src="js/ocr.js"></script>
 <script src="js/importers.js"></script>
+<script src="js/export.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
 </body>
