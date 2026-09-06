@@ -56,6 +56,17 @@
       setTimeout(() => { btn.textContent = original; }, 1500);
     };
 
+    document.getElementById("btn-download-card").onclick = async () => {
+      const btn = document.getElementById("btn-download-card");
+      const original = btn.textContent;
+      try {
+        await window.BeliExport.download(personA, personB, results);
+      } catch (e) {
+        btn.textContent = "Couldn't generate image";
+        setTimeout(() => { btn.textContent = original; }, 1500);
+      }
+    };
+
     document.getElementById("btn-restart").onclick = () => {
       window.location.href = window.location.pathname + window.location.search;
     };
