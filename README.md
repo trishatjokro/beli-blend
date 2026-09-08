@@ -36,6 +36,8 @@ Then open `http://localhost:8000`. (Use a local server rather than opening `inde
 
 Or just enable **GitHub Pages** on this repo (Settings → Pages → deploy from `main`) and use the hosted link.
 
+It's also installable — "Add to Home Screen" (mobile) or the install icon in the address bar (desktop) — and the app shell is cached by a service worker (`sw.js`), so it still opens with a spotty connection.
+
 ## How to use it
 
 1. Open the site, add your restaurants (screenshot upload, paste, or manual), enter your name, and hit **Generate my Blend link**.

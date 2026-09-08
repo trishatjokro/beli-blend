@@ -6,6 +6,12 @@
 <title>Beli Blend</title>
 <meta name="description" content="Spotify Wrapped, but for your Beli restaurant rankings. Blend your taste with a friend's." />
 <link rel="stylesheet" href="styles.css" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="theme-color" content="#ff5a36" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Beli Blend" />
 </head>
 <body>
 
@@ -155,5 +161,12 @@
 <script src="js/export.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
+</script>
 </body>
 </html>
