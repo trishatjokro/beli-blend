@@ -220,6 +220,7 @@
         setupWelcome();
       }
     } catch (e) {
+      console.error("Beli Blend: failed to load link", e);
       alert("That link looks broken or your browser doesn't support it. Starting a fresh Blend.");
       window.location.href = window.location.pathname + window.location.search;
     }
