@@ -112,20 +112,21 @@ window.BeliAlgorithm = (function () {
     return cosineSimilarity(vecA, vecB);
   }
 
-  function cuisineVectors(personA, personB) {
-    function avgByCuisine(person) {
-      const sums = new Map();
-      const counts = new Map();
-      for (const r of person.restaurants) {
-        const c = (r.cuisine || "").trim().toLowerCase();
-        if (!c) continue;
-        sums.set(c, (sums.get(c) || 0) + r.score);
-        counts.set(c, (counts.get(c) || 0) + 1);
-      }
-      const avgs = new Map();
-      for (const [c, sum] of sums.entries()) avgs.set(c, sum / counts.get(c));
-      return avgs;
+  function avgByCuisine(person) {
+    const sums = new Map();
+    const counts = new Map();
+    for (const r of person.restaurants) {
+      const c = (r.cuisine || "").trim().toLowerCase();
+      if (!c) continue;
+      sums.set(c, (sums.get(c) || 0) + r.score);
+      counts.set(c, (counts.get(c) || 0) + 1);
     }
+    const avgs = new Map();
+    for (const [c, sum] of sums.entries()) avgs.set(c, sum / counts.get(c));
+    return avgs;
+  }
+
+  function cuisineVectors(personA, personB) {
     const avgA = avgByCuisine(personA);
     const avgB = avgByCuisine(personB);
     const cuisines = Array.from(new Set([...avgA.keys(), ...avgB.keys()]));
@@ -203,5 +204,108 @@ window.BeliAlgorithm = (function () {
     };
   }
 
-  return { cosineSimilarity, compute, tierLabel };
+  // ---------------- Group ("N-way Blend") ----------------
+  // Reuses the pairwise compute() above for the matrix + headline average,
+  // rather than inventing new N-way statistics. "Shared by everyone" is
+  // exact-normalized-name only (no fuzzy fallback) — clustering near-duplicate
+  // names across N lists is real entity-resolution work; out of scope for v1,
+  // same as any exact-match limitation, fix names in the review table.
+
+  function variance(scores) {
+    const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+    return scores.reduce((s, x) => s + (x - mean) ** 2, 0) / scores.length;
+  }
+
+  function sharedByAll(people) {
+    const maps = people.map(indexByName);
+    const [first, ...rest] = maps;
+    const items = [];
+    for (const [key, r0] of first.entries()) {
+      const rows = [r0];
+      let ok = true;
+      for (const m of rest) {
+        const r = m.get(key);
+        if (!r) { ok = false; break; }
+        rows.push(r);
+      }
+      if (ok) {
+        items.push({
+          name: r0.name,
+          scores: rows.map((r) => r.score),
+          cuisine: rows.find((r) => r.cuisine)?.cuisine || "",
+        });
+      }
+    }
+    return items;
+  }
+
+  function cuisineVibeGroup(people, limit = 5) {
+    const avgs = people.map(avgByCuisine);
+    let common = new Set(avgs[0] ? avgs[0].keys() : []);
+    for (const m of avgs.slice(1)) common = new Set([...common].filter((c) => m.has(c)));
+    return [...common]
+      .map((c) => ({ cuisine: c, avgs: avgs.map((m) => m.get(c)), combined: avgs.reduce((s, m) => s + m.get(c), 0) }))
+      .sort((a, b) => b.combined - a.combined)
+      .slice(0, limit);
+  }
+
+  function recommendationsGroup(people, idx, threshold = 8, limit = 3) {
+    const target = people[idx];
+    const ownKeys = new Set(indexByName(target).keys());
+    const scoreMap = new Map();
+    people.forEach((p, j) => {
+      if (j === idx) return;
+      for (const r of p.restaurants) {
+        const key = normalizeName(r.name);
+        if (!key || ownKeys.has(key)) continue;
+        if (!scoreMap.has(key)) scoreMap.set(key, { name: r.name, scores: [] });
+        scoreMap.get(key).scores.push(r.score);
+      }
+    });
+    const recs = [];
+    for (const { name, scores } of scoreMap.values()) {
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+      if (avg >= threshold) recs.push({ name, score: Math.round(avg * 10) / 10 });
+    }
+    return recs.sort((a, b) => b.score - a.score).slice(0, limit);
+  }
+
+  function computeGroup(people) {
+    const n = people.length;
+    const pairwise = [];
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        pairwise.push({ i, j, result: compute(people[i], people[j]) });
+      }
+    }
+    const pct = Math.round(pairwise.reduce((s, p) => s + p.result.pct, 0) / pairwise.length);
+
+    const shared = sharedByAll(people);
+    const withVariance = shared.map((s) => ({ ...s, variance: variance(s.scores) }));
+    const sortedByVariance = [...withVariance].sort((a, b) => a.variance - b.variance);
+    const mostAgreed = sortedByVariance[0] || null;
+    const topDisagreements = [...withVariance]
+      .filter((s) => s.variance > 0)
+      .sort((a, b) => b.variance - a.variance)
+      .slice(0, 3);
+
+    const diversities = people.map(cuisineDiversity);
+    const maxDiversity = Math.max(...diversities);
+    const mostAdventurousIdx = diversities.indexOf(maxDiversity);
+
+    return {
+      pct,
+      tier: tierLabel(pct),
+      n,
+      pairwise,
+      shared,
+      mostAgreed,
+      topDisagreements,
+      sharedCuisines: cuisineVibeGroup(people),
+      adventure: { diversities, mostAdventurousIdx },
+      recs: people.map((_, i) => recommendationsGroup(people, i)),
+    };
+  }
+
+  return { cosineSimilarity, compute, computeGroup, tierLabel };
 })();
