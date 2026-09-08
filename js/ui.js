@@ -264,6 +264,122 @@ window.BeliUI = (function () {
     return slides;
   }
 
+  // ---------------- Group results deck (3+ people) ----------------
+
+  function joinNamesForTitle(names) {
+    const escaped = names.map(escapeHtml);
+    if (escaped.length === 1) return escaped[0];
+    if (escaped.length === 2) return `${escaped[0]} + ${escaped[1]}`;
+    return `${escaped.slice(0, -1).join(", ")} & ${escaped[escaped.length - 1]}`;
+  }
+
+  function buildGroupSlides(people, r) {
+    const slides = [];
+    const names = people.map((p) => p.name);
+
+    slides.push({
+      html: `<h2>${joinNamesForTitle(names)}'s</h2>
+             <div class="big-number" style="font-size:2.2rem">Beli Blend</div>
+             <p class="desc">Let's see how ${people.length} of you really eat.</p>`,
+    });
+
+    slides.push({
+      html: `<div class="tier-label">${escapeHtml(r.tier)}</div>
+             <div class="big-number">${r.pct}%</div>
+             <p class="desc">average compatibility across all ${people.length} of you.</p>`,
+    });
+
+    {
+      const lookup = new Map();
+      r.pairwise.forEach((p) => lookup.set(`${p.i}-${p.j}`, p.result.pct));
+      const header = `<th></th>` + names.slice(1).map((n) => `<th>${escapeHtml(n)}</th>`).join("");
+      const rows = names.slice(0, -1).map((rowName, i) => {
+        const cells = names.slice(1).map((_, colOffset) => {
+          const j = colOffset + 1;
+          return j <= i ? `<td></td>` : `<td>${lookup.get(`${i}-${j}`)}%</td>`;
+        }).join("");
+        return `<tr><th>${escapeHtml(rowName)}</th>${cells}</tr>`;
+      }).join("");
+      slides.push({
+        html: `<h2>Who vibes with who</h2>
+               <div class="matrix-wrap"><table class="compat-matrix"><tr>${header}</tr>${rows}</table></div>`,
+      });
+    }
+
+    if (r.shared.length > 0) {
+      const rows = [...r.shared]
+        .sort((a, b) => b.scores.reduce((s, x) => s + x, 0) - a.scores.reduce((s, x) => s + x, 0))
+        .slice(0, 8)
+        .map((s) => `<div class="item"><span class="name">${escapeHtml(s.name)}</span><span class="meta">${s.scores.join(" / ")}</span></div>`)
+        .join("");
+      slides.push({
+        html: `<h2>${r.shared.length} spot${r.shared.length === 1 ? "" : "s"} everyone's ranked</h2>
+               <p class="desc">${names.map(escapeHtml).join(" / ")} scores</p>
+               <div class="slide-list">${rows}</div>`,
+      });
+    }
+
+    if (r.mostAgreed) {
+      slides.push({
+        html: `<h2>You all agree most on</h2>
+               <div class="big-number" style="font-size:1.8rem">${escapeHtml(r.mostAgreed.name)}</div>
+               <p class="desc">${names.map(escapeHtml).join(" / ")}: ${r.mostAgreed.scores.join(" / ")}</p>`,
+      });
+    }
+
+    if (r.topDisagreements.length > 0) {
+      const rows = r.topDisagreements
+        .map((s) => `<div class="item"><span class="name">${escapeHtml(s.name)}</span><span class="meta">${s.scores.join(" / ")}</span></div>`)
+        .join("");
+      slides.push({
+        html: `<h2>Where you disagree most</h2>
+               <p class="desc">${names.map(escapeHtml).join(" / ")} scores</p>
+               <div class="slide-list">${rows}</div>`,
+      });
+    }
+
+    {
+      const maxDiv = r.adventure.diversities[r.adventure.mostAdventurousIdx];
+      if (maxDiv > 0) {
+        const rows = people
+          .map((p, i) => `<div class="item"><span class="name">${escapeHtml(p.name)}</span><span class="meta">${r.adventure.diversities[i]} cuisine${r.adventure.diversities[i] === 1 ? "" : "s"}</span></div>`)
+          .join("");
+        slides.push({
+          html: `<h2>Most adventurous eater</h2>
+                 <div class="big-number" style="font-size:1.8rem">${escapeHtml(names[r.adventure.mostAdventurousIdx])}</div>
+                 <div class="slide-list">${rows}</div>`,
+        });
+      }
+    }
+
+    if (r.sharedCuisines.length > 0) {
+      const rows = r.sharedCuisines
+        .map((c) => `<div class="item"><span class="name">${escapeHtml(c.cuisine)}</span><span class="meta">${(c.combined / people.length).toFixed(1)} avg</span></div>`)
+        .join("");
+      slides.push({
+        html: `<h2>Your shared cuisine vibe</h2>
+               <div class="slide-list">${rows}</div>`,
+      });
+    }
+
+    const recBlocks = people
+      .map((p, i) => ({ p, recs: r.recs[i] }))
+      .filter(({ recs }) => recs.length > 0)
+      .map(({ p, recs }) => `<p class="desc" style="margin-top:14px"><strong>${escapeHtml(p.name)}</strong> should try:</p>
+             <div class="slide-list">${recs.map((x) => `<div class="item"><span class="name">${escapeHtml(x.name)}</span><span class="meta">${x.score}</span></div>`).join("")}</div>`)
+      .join("");
+    if (recBlocks) {
+      slides.push({ html: `<h2>Recommendations</h2>${recBlocks}` });
+    }
+
+    slides.push({
+      html: `<h2>That's your Blend 🍽️</h2>
+             <p class="desc">Copy the results link below to save it, or invite one more person to grow the group.</p>`,
+    });
+
+    return slides;
+  }
+
   function renderDeck(deckSlidesEl, deckProgressEl, slides) {
     deckSlidesEl.innerHTML = slides
       .map((s, i) => `<div class="slide${i === 0 ? " active" : ""}">${s.html}</div>`)
@@ -289,5 +405,5 @@ window.BeliUI = (function () {
     };
   }
 
-  return { createBuilder, buildSlides, renderDeck, escapeHtml };
+  return { createBuilder, buildSlides, buildGroupSlides, renderDeck, escapeHtml };
 })();
