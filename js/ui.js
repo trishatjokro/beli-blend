@@ -99,13 +99,41 @@ window.BeliUI = (function () {
     // Import file (Google Takeout / CSV)
     const importInput = root.querySelector(".import-file-input");
     const importStatus = root.querySelector(".import-status");
+
+    function showImportConfirm(parsed, mapping) {
+      importStatus.innerHTML = "";
+      const summary = document.createElement("p");
+      summary.className = "hint";
+      const cuisinePart = mapping.cuisine ? `, cuisine from "${escapeHtml(mapping.cuisine)}"` : "";
+      const scalePart = mapping.scaledFromStars ? " (scaled from a 5-star rating to /10)" : "";
+      summary.innerHTML = `Found ${parsed.length} restaurant${parsed.length === 1 ? "" : "s"} — name from "${escapeHtml(mapping.name)}", score from "${escapeHtml(mapping.score)}"${scalePart}${cuisinePart}. Check this looks right before adding.`;
+      const confirmBtn = document.createElement("button");
+      confirmBtn.className = "btn-secondary";
+      confirmBtn.textContent = `Add ${parsed.length} restaurant${parsed.length === 1 ? "" : "s"}`;
+      confirmBtn.style.marginRight = "8px";
+      const cancelBtn = document.createElement("button");
+      cancelBtn.className = "btn-tertiary";
+      cancelBtn.textContent = "Cancel";
+      confirmBtn.addEventListener("click", () => {
+        addItems(parsed);
+        importStatus.textContent = `Added ${parsed.length} restaurant${parsed.length === 1 ? "" : "s"} — check the list below and fix anything that looks off.`;
+      });
+      cancelBtn.addEventListener("click", () => { importStatus.textContent = ""; });
+      importStatus.appendChild(summary);
+      importStatus.appendChild(confirmBtn);
+      importStatus.appendChild(cancelBtn);
+    }
+
     importInput.addEventListener("change", async () => {
       const file = importInput.files && importInput.files[0];
       if (!file) return;
       try {
-        const { items: parsed, warning } = await window.BeliImporters.importFile(file);
+        const { items: parsed, warning, mapping } = await window.BeliImporters.importFile(file);
         if (warning) {
           importStatus.textContent = warning;
+        } else if (mapping) {
+          // CSV column detection is a heuristic — confirm the mapping before committing.
+          showImportConfirm(parsed, mapping);
         } else {
           addItems(parsed);
           importStatus.textContent = `Added ${parsed.length} restaurant${parsed.length === 1 ? "" : "s"} — check the list below and fix anything that looks off.`;
