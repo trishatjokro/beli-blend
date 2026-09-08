@@ -347,6 +347,28 @@ textarea.paste-input {
 .slide-list .item .name { font-weight: 600; }
 .slide-list .item .meta { opacity: 0.85; font-size: 0.82rem; }
 
+.matrix-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 12px auto 0;
+}
+
+.compat-matrix {
+  border-collapse: collapse;
+  margin: 0 auto;
+  font-size: 0.85rem;
+}
+
+.compat-matrix th,
+.compat-matrix td {
+  padding: 6px 12px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+}
+
+.compat-matrix th { font-weight: 600; opacity: 0.9; }
+
 .slide p.desc {
   opacity: 0.9;
   font-size: 0.95rem;
