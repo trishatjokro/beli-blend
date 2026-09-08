@@ -62,7 +62,36 @@
     <div class="deck-footer">
       <button id="btn-share-results" class="btn-secondary">Copy shareable results link</button>
       <button id="btn-download-card" class="btn-secondary">Download image to share</button>
+      <button id="btn-invite-third" class="btn-secondary">Invite a 3rd person</button>
       <button id="btn-restart" class="btn-tertiary">Start a new Blend</button>
+    </div>
+  </section>
+
+  <!-- ============ GROUP JOIN: N-th person joining an existing group ============ -->
+  <section id="view-group-join" class="view hidden">
+    <div class="hero">
+      <h1><span id="group-join-names">Your friends</span> want to Blend with you</h1>
+      <p class="sub">Add your ranked restaurants below to join the group.</p>
+    </div>
+    <div id="builder-group-join"></div>
+    <button id="btn-see-group-blend" class="btn-primary" disabled>See our Blend</button>
+  </section>
+
+  <!-- ============ GROUP RESULTS: N-way slide deck ============ -->
+  <section id="view-group-results" class="view hidden">
+    <div class="deck">
+      <div class="deck-progress" id="group-deck-progress"></div>
+      <div class="deck-slides" id="group-deck-slides"></div>
+      <div class="deck-nav">
+        <button id="btn-group-prev" class="btn-nav" aria-label="Previous">‹</button>
+        <button id="btn-group-next" class="btn-nav" aria-label="Next">›</button>
+      </div>
+    </div>
+    <div class="deck-footer">
+      <button id="btn-share-group-results" class="btn-secondary">Copy shareable results link</button>
+      <button id="btn-invite-another" class="btn-secondary">Invite another person</button>
+      <p id="group-size-warning" class="hint hidden"></p>
+      <button id="btn-restart-group" class="btn-tertiary">Start a new Blend</button>
     </div>
   </section>
 
