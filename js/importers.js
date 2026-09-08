@@ -82,7 +82,8 @@ window.BeliImporters = (function () {
     if (rows.length < 2) {
       return { items: [], warning: "No data rows found in this CSV." };
     }
-    const header = rows[0].map((h) => h.trim().toLowerCase());
+    const rawHeader = rows[0];
+    const header = rawHeader.map((h) => h.trim().toLowerCase());
     const nameIdx = findColumn(header, ["name", "restaurant", "restaurant name", "business", "business name", "place", "place name"]);
     const scoreIdx = findColumn(header, ["rating", "stars", "score", "my rating", "rank"]);
     const cuisineIdx = findColumn(header, ["cuisine", "category", "categories", "tag", "tags"]);
@@ -107,7 +108,13 @@ window.BeliImporters = (function () {
     const maxScore = raw.reduce((max, x) => Math.max(max, x.score), -Infinity);
     const scale = maxScore > 0 && maxScore <= 5 ? 2 : 1;
     const items = raw.map((x) => ({ ...x, score: clampScore(x.score * scale) }));
-    return { items, warning: null };
+    const mapping = {
+      name: rawHeader[nameIdx].trim(),
+      score: rawHeader[scoreIdx].trim(),
+      cuisine: cuisineIdx !== -1 ? rawHeader[cuisineIdx].trim() : null,
+      scaledFromStars: scale === 2,
+    };
+    return { items, warning: null, mapping };
   }
 
   async function importFile(file) {
