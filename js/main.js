@@ -2,9 +2,18 @@
   const viewWelcome = document.getElementById("view-welcome");
   const viewJoin = document.getElementById("view-join");
   const viewResults = document.getElementById("view-results");
+  const viewGroupJoin = document.getElementById("view-group-join");
+  const viewGroupResults = document.getElementById("view-group-results");
+  const ALL_VIEWS = [viewWelcome, viewJoin, viewResults, viewGroupJoin, viewGroupResults];
 
   function showView(el) {
-    [viewWelcome, viewJoin, viewResults].forEach((v) => v.classList.toggle("hidden", v !== el));
+    ALL_VIEWS.forEach((v) => v.classList.toggle("hidden", v !== el));
+  }
+
+  function joinNames(names) {
+    if (names.length === 1) return names[0];
+    if (names.length === 2) return `${names[0]} and ${names[1]}`;
+    return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
   }
 
   async function copyToClipboard(text) {
@@ -67,6 +76,15 @@
       }
     };
 
+    document.getElementById("btn-invite-third").onclick = async () => {
+      const link = await window.BeliState.buildLink("g", { people: [personA, personB] });
+      await copyToClipboard(link);
+      const btn = document.getElementById("btn-invite-third");
+      const original = btn.textContent;
+      btn.textContent = "Copied!";
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    };
+
     document.getElementById("btn-restart").onclick = () => {
       window.location.href = window.location.pathname + window.location.search;
     };
@@ -107,6 +125,78 @@
     showView(viewJoin);
   }
 
+  function setupGroupJoin(people) {
+    document.getElementById("group-join-names").textContent = joinNames(people.map((p) => p.name));
+    const builder = window.BeliUI.createBuilder(document.getElementById("builder-group-join"));
+    const btn = document.getElementById("btn-see-group-blend");
+    builder.onChange(() => { btn.disabled = !builder.isReady(); });
+
+    btn.addEventListener("click", () => {
+      const newPerson = { name: builder.getName(), restaurants: builder.getItems() };
+      renderGroupResults([...people, newPerson]);
+    });
+
+    showView(viewGroupJoin);
+  }
+
+  function renderGroupResults(people) {
+    const results = window.BeliAlgorithm.computeGroup(people);
+    const slides = window.BeliUI.buildGroupSlides(people, results);
+    const deckSlidesEl = document.getElementById("group-deck-slides");
+    const deckProgressEl = document.getElementById("group-deck-progress");
+    const deck = window.BeliUI.renderDeck(deckSlidesEl, deckProgressEl, slides);
+
+    document.getElementById("btn-group-next").onclick = () => deck.next();
+    document.getElementById("btn-group-prev").onclick = () => deck.prev();
+
+    document.onkeydown = (e) => {
+      if (viewGroupResults.classList.contains("hidden")) return;
+      if (e.key === "ArrowRight") deck.next();
+      if (e.key === "ArrowLeft") deck.prev();
+    };
+
+    let touchStartX = null;
+    deckSlidesEl.ontouchstart = (e) => { touchStartX = e.touches[0].clientX; };
+    deckSlidesEl.ontouchend = (e) => {
+      if (touchStartX === null) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 40) dx < 0 ? deck.next() : deck.prev();
+      touchStartX = null;
+    };
+
+    document.getElementById("btn-share-group-results").onclick = async () => {
+      const link = await window.BeliState.buildLink("gr", { people });
+      await copyToClipboard(link);
+      const btn = document.getElementById("btn-share-group-results");
+      const original = btn.textContent;
+      btn.textContent = "Copied!";
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    };
+
+    document.getElementById("btn-invite-another").onclick = async () => {
+      const link = await window.BeliState.buildLink("g", { people });
+      await copyToClipboard(link);
+      const btn = document.getElementById("btn-invite-another");
+      const original = btn.textContent;
+      btn.textContent = "Copied!";
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    };
+
+    const warningEl = document.getElementById("group-size-warning");
+    if (people.length >= 6) {
+      warningEl.textContent = `Heads up — with ${people.length} people the shareable link is getting long. It'll still work, but some apps may truncate very long links.`;
+      warningEl.classList.remove("hidden");
+    } else {
+      warningEl.classList.add("hidden");
+    }
+
+    document.getElementById("btn-restart-group").onclick = () => {
+      window.location.href = window.location.pathname + window.location.search;
+    };
+
+    showView(viewGroupResults);
+  }
+
   async function init() {
     const hash = window.BeliState.readHash();
     if (!hash) {
@@ -120,6 +210,12 @@
       } else if (hash.key === "r") {
         const { a, b } = await window.BeliState.decode(hash.value);
         renderResults(a, b);
+      } else if (hash.key === "g") {
+        const { people } = await window.BeliState.decode(hash.value);
+        setupGroupJoin(people);
+      } else if (hash.key === "gr") {
+        const { people } = await window.BeliState.decode(hash.value);
+        renderGroupResults(people);
       } else {
         setupWelcome();
       }
