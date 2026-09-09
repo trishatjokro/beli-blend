@@ -173,6 +173,17 @@
       setTimeout(() => { btn.textContent = original; }, 1500);
     };
 
+    document.getElementById("btn-download-group-card").onclick = async () => {
+      const btn = document.getElementById("btn-download-group-card");
+      const original = btn.textContent;
+      try {
+        await window.BeliExport.downloadGroup(people, results);
+      } catch (e) {
+        btn.textContent = "Couldn't generate image";
+        setTimeout(() => { btn.textContent = original; }, 1500);
+      }
+    };
+
     document.getElementById("btn-invite-another").onclick = async () => {
       const link = await window.BeliState.buildLink("g", { people });
       await copyToClipboard(link);
