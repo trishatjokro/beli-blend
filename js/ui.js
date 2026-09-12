@@ -306,6 +306,20 @@ window.BeliUI = (function () {
       });
     }
 
+    if (r.bestPair) {
+      const bestNames = `${escapeHtml(names[r.bestPair.i])} & ${escapeHtml(names[r.bestPair.j])}`;
+      const worstDiffers = r.worstPair && r.worstPair.result.pct < r.bestPair.result.pct;
+      const worstHtml = worstDiffers
+        ? `<div class="tier-label" style="margin-top:14px">Most different: ${escapeHtml(names[r.worstPair.i])} & ${escapeHtml(names[r.worstPair.j])} (${r.worstPair.result.pct}%)</div>`
+        : "";
+      slides.push({
+        html: `<h2>Best matched pair</h2>
+               <div class="big-number" style="font-size:1.8rem">${bestNames}</div>
+               <p class="desc">${r.bestPair.result.pct}% compatibility</p>
+               ${worstHtml}`,
+      });
+    }
+
     if (r.shared.length > 0) {
       const rows = [...r.shared]
         .sort((a, b) => b.scores.reduce((s, x) => s + x, 0) - a.scores.reduce((s, x) => s + x, 0))
