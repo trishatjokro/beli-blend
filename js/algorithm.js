@@ -293,11 +293,20 @@ window.BeliAlgorithm = (function () {
     const maxDiversity = Math.max(...diversities);
     const mostAdventurousIdx = diversities.indexOf(maxDiversity);
 
+    // Best/worst matched pair straight off the pairwise matrix above — only
+    // meaningful with 3+ people (2 people means a single pair, i.e. no
+    // "best vs worst" to report).
+    const sortedPairwise = [...pairwise].sort((a, b) => b.result.pct - a.result.pct);
+    const bestPair = pairwise.length >= 2 ? sortedPairwise[0] : null;
+    const worstPair = pairwise.length >= 2 ? sortedPairwise[sortedPairwise.length - 1] : null;
+
     return {
       pct,
       tier: tierLabel(pct),
       n,
       pairwise,
+      bestPair,
+      worstPair,
       shared,
       mostAgreed,
       topDisagreements,
