@@ -1,7 +1,7 @@
 // DOM wiring: the restaurant-list builder (shared by the welcome and join
 // views) and the Wrapped-style results slide deck.
 window.BeliUI = (function () {
-  const { parseBlock } = window.BeliParse;
+  const { parseBlock, normalizeName } = window.BeliParse;
 
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, (c) => ({
@@ -19,48 +19,87 @@ window.BeliUI = (function () {
 
     const items = [];
     const listeners = [];
+    const rowByItem = new Map();
 
     const reviewList = root.querySelector(".review-list");
     const reviewCount = root.querySelector(".review-count");
+    const duplicateHint = root.querySelector(".duplicate-hint");
     const nameInput = root.querySelector(".your-name");
 
     function notify() {
       listeners.forEach((fn) => fn());
     }
 
-    function addItems(newItems) {
-      for (const it of newItems) {
-        if (it.name && typeof it.score === "number" && !isNaN(it.score)) {
-          items.push({ name: it.name, score: it.score, cuisine: it.cuisine || "" });
-        }
-      }
-      renderReview();
+    function updateCount() {
+      reviewCount.textContent = `${items.length} restaurant${items.length === 1 ? "" : "s"}`;
     }
 
-    function renderReview() {
-      reviewList.innerHTML = "";
+    // Flags rows whose name collides (after normalizing) with another row in
+    // this same list — a silent duplicate would otherwise just mean the
+    // second one quietly wins when matching against the other person.
+    function updateDuplicateFlags() {
+      const counts = new Map();
+      for (const it of items) {
+        const key = normalizeName(it.name);
+        if (!key) continue;
+        counts.set(key, (counts.get(key) || 0) + 1);
+      }
+      let anyDuplicate = false;
+      for (const it of items) {
+        const key = normalizeName(it.name);
+        const isDup = !!key && counts.get(key) > 1;
+        if (isDup) anyDuplicate = true;
+        const entry = rowByItem.get(it);
+        if (entry) entry.nameEl.classList.toggle("rr-duplicate", isDup);
+      }
+      duplicateHint.classList.toggle("hidden", !anyDuplicate);
+    }
+
+    // Builds and wires one review row's DOM node. Rows are created once per
+    // item and patched/removed individually — not rebuilt from scratch on
+    // every add/delete, which matters once a list has 50+ rows (a CSV/
+    // Takeout import, say) and the person keeps editing it.
+    function createRow(item) {
       const rowTpl = document.getElementById("tpl-review-row");
-      items.forEach((item, idx) => {
-        const node = rowTpl.content.cloneNode(true);
-        const row = node.querySelector(".review-row");
-        const nameEl = row.querySelector(".rr-name");
-        const scoreEl = row.querySelector(".rr-score");
-        const cuisineEl = row.querySelector(".rr-cuisine");
-        const delEl = row.querySelector(".rr-delete");
-        nameEl.value = item.name;
-        scoreEl.value = item.score;
-        cuisineEl.value = item.cuisine || "";
-        nameEl.addEventListener("input", () => { item.name = nameEl.value; notify(); });
-        scoreEl.addEventListener("input", () => { item.score = parseFloat(scoreEl.value); notify(); });
-        cuisineEl.addEventListener("input", () => { item.cuisine = cuisineEl.value; });
-        delEl.addEventListener("click", () => {
-          items.splice(idx, 1);
-          renderReview();
-          notify();
-        });
-        reviewList.appendChild(node);
+      const node = rowTpl.content.cloneNode(true);
+      const row = node.querySelector(".review-row");
+      const nameEl = row.querySelector(".rr-name");
+      const scoreEl = row.querySelector(".rr-score");
+      const cuisineEl = row.querySelector(".rr-cuisine");
+      const delEl = row.querySelector(".rr-delete");
+      nameEl.value = item.name;
+      scoreEl.value = item.score;
+      cuisineEl.value = item.cuisine || "";
+      nameEl.addEventListener("input", () => { item.name = nameEl.value; updateDuplicateFlags(); notify(); });
+      scoreEl.addEventListener("input", () => { item.score = parseFloat(scoreEl.value); notify(); });
+      cuisineEl.addEventListener("input", () => { item.cuisine = cuisineEl.value; });
+      delEl.addEventListener("click", () => {
+        const idx = items.indexOf(item);
+        if (idx !== -1) items.splice(idx, 1);
+        rowByItem.delete(item);
+        row.remove();
+        updateCount();
+        updateDuplicateFlags();
+        notify();
       });
-      reviewCount.textContent = `${items.length} restaurant${items.length === 1 ? "" : "s"}`;
+      rowByItem.set(item, { row, nameEl });
+      return row;
+    }
+
+    function addItems(newItems) {
+      const added = [];
+      for (const it of newItems) {
+        if (it.name && typeof it.score === "number" && !isNaN(it.score)) {
+          const item = { name: it.name, score: it.score, cuisine: it.cuisine || "" };
+          items.push(item);
+          added.push(item);
+        }
+      }
+      for (const item of added) {
+        reviewList.appendChild(createRow(item));
+      }
+      updateCount();
+      updateDuplicateFlags();
       notify();
     }
 

@@ -190,6 +190,11 @@ textarea.paste-input {
   width: 100%;
 }
 
+.review-row input.rr-duplicate {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
 .rr-delete {
   border: none;
   background: none;
