@@ -50,14 +50,25 @@ It's also installable — "Add to Home Screen" (mobile) or the install icon in t
 Vanilla HTML/CSS/JS, no framework, no build tooling. `Tesseract.js` is loaded from a CDN for OCR; everything else — parsing, the compatibility algorithm, state encoding, and the slide deck — is plain JS in `js/`.
 
 ```
-index.html        page shell + templates
+index.html          page shell + templates
 styles.css
-js/state.js        URL-hash state encode/decode (gzip + base64url, no backend)
-js/parse.js         paste/OCR text → {name, score, cuisine} guesses
-js/ocr.js            in-browser screenshot OCR (Tesseract.js)
-js/algorithm.js      cosine-similarity compatibility scoring
-js/ui.js               list-builder UI + results slide deck rendering
-js/main.js              view routing / wiring
+manifest.json, sw.js, icons/   PWA: installable, works offline
+js/state.js          URL-hash state encode/decode (gzip + base64url, no backend)
+js/parse.js           paste/OCR text → {name, score, cuisine} guesses
+js/ocr.js               in-browser screenshot OCR (Tesseract.js)
+js/importers.js          Google Takeout / CSV import
+js/algorithm.js            cosine-similarity compatibility scoring (pairwise + group)
+js/export.js                 renders the results card to a downloadable PNG
+js/ui.js                       list-builder UI + results slide deck rendering
+js/main.js                      view routing / wiring
+```
+
+### Tests
+
+`js/parse.js`, `js/algorithm.js`, `js/importers.js`, and `js/state.js` are pure functions with no DOM dependency, so they're covered by a small test suite that runs on plain Node (no test framework, no dependencies — just `node --test`):
+
+```bash
+npm test
 ```
 
 ## Limitations

@@ -1,0 +1,8 @@
+{
+  "name": "beli-blend",
+  "private": true,
+  "description": "Test runner config only — the site itself ships with no build step or dependencies.",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
+}
